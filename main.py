@@ -1,8 +1,8 @@
 # main.py
 
 from fastapi import FastAPI
-from database import database
-from user import router as user_router
+from core.database import database
+from routes.user_routes import router as user_router
 
 
 app = FastAPI()

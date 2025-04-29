@@ -2,7 +2,10 @@ from fastapi import Depends, HTTPException
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.future import select
-from schemas import UserCreate, UserLogin  # Make sure these schemas exist in your code
+from schemas.user_schemas import (
+    UserCreate,
+    UserLogin,
+)  # Make sure these schemas exist in your code
 from models import User  # Ensure the User model is defined with the correct fields
 from core.database import get_db
 from core.security import hash_password, verify_password, create_access_token
