@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from sqlalchemy.future import select
-from schemas import UserCreate  # Make sure these schemas exist in your code
+from schemas import UserCreate, UserLogin  # Make sure these schemas exist in your code
 from models import User  # Ensure the User model is defined with the correct fields
 from database import get_db
 
@@ -69,3 +69,13 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
     return {"message": "User registered successfully"}
+
+
+@router.post("/login", status_code=status.HTTP_200_OK)
+def login(user: UserLogin, db: Session = Depends(get_db)):
+    result = db.execute(select(User).where(User.email == user.email))
+    db_user = result.scalars().first()
+    if not db_user or not verify_password(user.password, db_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    access_token = create_access_token(data={"sub": db_user.email})
+    return {"access_token": access_token, "token_type": "bearer"}

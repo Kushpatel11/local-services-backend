@@ -8,3 +8,8 @@ class UserCreate(BaseModel):
     password: str
     mobile: Optional[str] = None
     role: str = "user"
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
