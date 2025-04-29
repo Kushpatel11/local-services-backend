@@ -1,0 +1,16 @@
+from pydantic import BaseSettings
+
+
+class Settings(BaseSettings):
+    DATABASE_URL = (
+        "postgresql+psycopg2://postgres:Kush%4097252@localhost:5432/localservicesdb"
+    )
+    SECRET_KEY = "lilalilalila lilalilala"
+    ALGORITHM = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+    class Config:
+        env_file = ".env"
+
+
+settings = Settings()
