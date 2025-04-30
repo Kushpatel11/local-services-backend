@@ -8,7 +8,8 @@ from schemas.user_schemas import (
 )  # Make sure these schemas exist in your code
 from models import User  # Ensure the User model is defined with the correct fields
 from core.database import get_db
-from core.security import hash_password, verify_password, create_access_token
+from core.security import create_access_token
+from utils.hashing import hash_password, verify_password
 
 
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
