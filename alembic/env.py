@@ -1,8 +1,19 @@
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from database import Base
-from models import User
+from core.database import Base
+from models import (
+    User,
+    UserAddress,
+    ServiceCategory,
+    ServiceProvider,
+    ProviderAddress,
+    Service,
+    Booking,
+    BookingAddress,
+    ServiceRating,
+    Admin,
+)
 
 from alembic import context
 

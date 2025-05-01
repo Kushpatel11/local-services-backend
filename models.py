@@ -19,9 +19,9 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     fullname = Column(String(100), nullable=False)
-    email = Column(String(150), unique=True, nullable=False)
+    email = Column(String(150), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    mobile = Column(String(15), unique=True)
+    mobile = Column(String(15), unique=True, index=True)
     role = Column(String(50), nullable=False)  # 'customer', 'service_provider', 'admin'
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False)
@@ -36,13 +36,13 @@ class User(Base):
 
 
 class UserAddress(Base):
-    __tablename__ = "user-address"
+    __tablename__ = "user_address"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     city = Column(String, nullable=False)
     district = Column(String, nullable=False)
     state = Column(String, nullable=False)
-    contry = Column(String, nullable=False)
+    country = Column(String, nullable=False)
     pincode = Column(String(6), nullable=False)
     latitude = Column(Float, nullable=False)  # Latitude coordinate (float)
     longitude = Column(Float, nullable=False)  # Longitude coordinate (float)
@@ -53,8 +53,8 @@ class UserAddress(Base):
     user = relationship("User", back_populates="user_addresses")
 
 
-class ServiceCategories(Base):
-    __tablename__ = "service-categories"
+class ServiceCategory(Base):
+    __tablename__ = "service_categories"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
@@ -74,8 +74,8 @@ class ServiceProvider(Base):
     )
     experience_years = Column(Integer, nullable=False)
     name = Column(String, nullable=False)
-    mobile = Column(String(15), nullable=False)
-    email = Column(String, nullable=False)
+    mobile = Column(String(15), nullable=False, index=True)
+    email = Column(String, nullable=False, index=True)
     is_approved = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
@@ -86,7 +86,7 @@ class ServiceProvider(Base):
         "ProviderAddress", back_populates="provider", cascade="all, delete"
     )
     services = relationship("Service", back_populates="provider", cascade="all, delete")
-    category = relationship("ServiceCategories", back_populates="providers")
+    category = relationship("ServiceCategory", back_populates="providers")
 
 
 class ProviderAddress(Base):
@@ -98,7 +98,7 @@ class ProviderAddress(Base):
     city = Column(String, nullable=False)
     district = Column(String, nullable=False)
     state = Column(String, nullable=False)
-    contry = Column(String, nullable=False)
+    country = Column(String, nullable=False)
     pincode = Column(String(6), nullable=False)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
@@ -180,14 +180,14 @@ class Booking(Base):
 
 
 class BookingAddress(Base):
-    __tablename__ = "booking-address"
+    __tablename__ = "booking_address"
     id = Column(Integer, primary_key=True, index=True)
     booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
 
     city = Column(String, nullable=False)
     district = Column(String, nullable=False)
     state = Column(String, nullable=False)
-    contry = Column(String, nullable=False)
+    country = Column(String, nullable=False)
     pincode = Column(String(6), nullable=False)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
@@ -201,7 +201,7 @@ class Admin(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    email = Column(String, unique=True, nullable=False)
+    email = Column(String, unique=True, nullable=False, index=True)
     password_hash = Column(String, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
