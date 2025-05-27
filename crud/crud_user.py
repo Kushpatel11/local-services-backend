@@ -1,5 +1,6 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Response
 from datetime import datetime
+
 from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 from schemas.user_schemas import (
@@ -10,6 +11,7 @@ from models import User  # Ensure the User model is defined with the correct fie
 from core.database import get_db
 from core.security import create_access_token
 from utils.hashing import hash_password, verify_password
+from dependencies.user_dependencies import get_current_user
 
 
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
@@ -41,3 +43,8 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     access_token = create_access_token(data={"sub": db_user.email})
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+def logout_user(response: Response):
+    response.delete_cookie("access_token")
+    return {"message": "Logged out successfully"}

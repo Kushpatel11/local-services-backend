@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="D:\local-services-booking-app\local-services-backend\venv"
+VIRTUAL_ENV="D:\UrbanEase-Backend\local-services-backend\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
