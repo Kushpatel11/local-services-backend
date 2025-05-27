@@ -33,6 +33,23 @@ class User(Base):
     ratings = relationship(
         "ServiceRating", back_populates="user", cascade="all, delete"
     )
+    other_details = relationship(
+        "UserOtherDetails", back_populates="user", uselist=False, cascade="all, delete"
+    )
+
+
+class UserOtherDetails(Base):
+    __tablename__ = "user_other_details"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+
+    profile_picture_url = Column(String(255))
+    preferred_language = Column(String(50))
+    notification_preferences = Column(String(255))  # Could store as JSON string
+    date_of_birth = Column(Date)
+
+    user = relationship("User", back_populates="other_details")
 
 
 class UserAddress(Base):

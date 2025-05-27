@@ -1,8 +1,10 @@
-from schemas.user_schemas import UserCreate, UserLogin
+from fastapi.security import OAuth2PasswordRequestForm
+from schemas.user_schemas import UserCreate, UserProfile
 from sqlalchemy.orm import Session
-from fastapi import Depends, status, APIRouter
+from fastapi import Depends, Response, status, APIRouter
 from core.database import get_db
-from crud.crud_user import create_user, login_user, logout_user
+from crud.crud_user import create_user, login_user, logout_user, user_profile
+from dependencies.user_dependencies import get_current_user
 
 
 router = APIRouter()
@@ -14,10 +16,17 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", status_code=status.HTTP_200_OK)
-def login(user: UserLogin, db: Session = Depends(get_db)):
-    return login_user(user, db)
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+):
+    return login_user(form_data, db)
 
 
-@router.post("logout")
-def logout(response):
+@router.post("/logout")
+def logout(response: Response, user: dict = Depends(get_current_user)):
     return logout_user(response)
+
+
+@router.get("/profile", status_code=status.HTTP_200_OK)
+def get_profile(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    return user_profile(db, user)
