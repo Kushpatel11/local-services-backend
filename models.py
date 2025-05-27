@@ -27,14 +27,18 @@ class User(Base):
     updated_at = Column(DateTime, nullable=False)
 
     user_addresses = relationship(
-        "UserAddress", back_populates="user", cascade="all, delete"
+        "UserAddress", back_populates="user", cascade="all, delete-orphan"
     )
     bookings = relationship("Booking", back_populates="user", cascade="all, delete")
     ratings = relationship(
         "ServiceRating", back_populates="user", cascade="all, delete"
     )
     other_details = relationship(
-        "UserOtherDetails", back_populates="user", uselist=False, cascade="all, delete"
+        "UserOtherDetails",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete",
+        foreign_keys="[UserOtherDetails.user_id]",
     )
 
 
@@ -56,13 +60,14 @@ class UserAddress(Base):
     __tablename__ = "user_address"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    city = Column(String, nullable=False)
-    district = Column(String, nullable=False)
-    state = Column(String, nullable=False)
-    country = Column(String, nullable=False)
-    pincode = Column(String(6), nullable=False)
-    latitude = Column(Float, nullable=False)  # Latitude coordinate (float)
-    longitude = Column(Float, nullable=False)  # Longitude coordinate (float)
+    address_line = Column(String, nullable=True)
+    city = Column(String, nullable=True)
+    district = Column(String, nullable=True)
+    state = Column(String, nullable=True)
+    country = Column(String, nullable=True)
+    pincode = Column(String(6), nullable=True)
+    latitude = Column(Float, nullable=True)  # Latitude coordinate (float)
+    longitude = Column(Float, nullable=True)  # Longitude coordinate (float)
     label = Column(String, nullable=True)
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False)

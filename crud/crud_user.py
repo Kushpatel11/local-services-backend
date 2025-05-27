@@ -1,18 +1,19 @@
 from fastapi import Depends, HTTPException, Response
 from datetime import datetime
 
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.future import select
 from schemas.user_schemas import (
     UserCreate,
-    UserProfile,
-)  # Make sure these schemas exist in your code
+    UserProfileUpdate,
+)
 from models import (
     User,
     UserOtherDetails,
     UserAddress,
-)  # Ensure the User model is defined with the correct fields
+)
 from core.database import get_db
 from core.security import create_access_token
 from utils.hashing import hash_password, verify_password
@@ -78,12 +79,13 @@ def user_profile(
         "full_name": db_user.fullname,
         "email": db_user.email,
         "phone_number": db_user.mobile,
-        "city": address.city if address else None,
         "address": (
             {
-                "state": address.state,
-                "country": address.country,
-                "pincode": address.pincode,
+                "address_line": address.address_line if address else None,
+                "city": address.city if address else None,
+                "state": address.state if address else None,
+                "country": address.country if address else None,
+                "pincode": address.pincode if address else None,
             }
             if address
             else None
@@ -95,3 +97,67 @@ def user_profile(
         "created_at": db_user.created_at,
         "updated_at": db_user.updated_at,
     }
+
+
+def update_user_profile(
+    payload: UserProfileUpdate,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    if "sub" not in user:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+    user = db.query(User).filter(User.email == user["sub"]).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if payload.full_name is not None:
+        user.fullname = payload.full_name
+    if payload.phone_number is not None:
+        user.mobile = payload.phone_number
+
+    # Update multiple addresses if provided
+    if payload.addresses:
+        db.query(UserAddress).filter(UserAddress.user_id == user.id).delete()
+        db.flush()
+        for addr_payload in payload.addresses:
+            new_address = UserAddress(
+                user_id=user.id,
+                address_line=addr_payload.address_line,
+                city=addr_payload.city if addr_payload.city is not None else None,
+                district=(
+                    addr_payload.district if addr_payload.district is not None else None
+                ),
+                state=addr_payload.state if addr_payload.state is not None else None,
+                country=(
+                    addr_payload.country if addr_payload.country is not None else None
+                ),
+                pincode=(
+                    addr_payload.pincode if addr_payload.pincode is not None else None
+                ),
+                label=addr_payload.label or "",
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+            )
+            user.user_addresses.append(new_address)
+            db.add(new_address)
+
+    # Update other profile details
+    other = user.other_details
+    if other is None:
+        other = UserOtherDetails(user_id=user.id)
+        db.add(other)
+
+    if payload.profile_picture_url is not None:
+        other.profile_picture_url = payload.profile_picture_url
+    if payload.preferred_language is not None:
+        other.preferred_language = payload.preferred_language
+    if payload.notification_preferences is not None:
+        other.notification_preferences = payload.notification_preferences
+    if payload.date_of_birth is not None:
+        other.date_of_birth = payload.date_of_birth
+
+    db.commit()
+    return JSONResponse(
+        status_code=200, content={"message": "Profile updated successfully"}
+    )
