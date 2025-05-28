@@ -1,5 +1,5 @@
 from fastapi.security import OAuth2PasswordRequestForm
-from schemas.user_schemas import UserCreate, UserProfile, UserProfileUpdate
+from schemas.user_schemas import UserCreate, UserProfileUpdate
 from sqlalchemy.orm import Session
 from fastapi import Depends, Response, status, APIRouter
 from core.database import get_db
