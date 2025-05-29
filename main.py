@@ -27,6 +27,4 @@ def read_root():
 
 app.include_router(user_router, prefix="/user", tags=["User"])
 app.include_router(provider_router, prefix="/provider", tags=["Provider"])
-app.include_router(booking_router, prefix="/bookings", tags=["Bookings"])
-# app.include_router(admin_router, prefix="/admin", tags=["Admin"])
-# app.include_router(service_provider_router, prefix="/servant", tags=["Servant"])
+app.include_router(booking_router, tags=["Bookings"])

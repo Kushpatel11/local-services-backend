@@ -12,8 +12,7 @@ class ProviderAddressOut(BaseModel):
     longitude: float
     label: Optional[str]
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 
 class ServiceCategoryOut(BaseModel):
@@ -21,8 +20,7 @@ class ServiceCategoryOut(BaseModel):
     name: str
     description: Optional[str]
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 
 class ServiceProviderOut(BaseModel):
@@ -34,5 +32,4 @@ class ServiceProviderOut(BaseModel):
     category: ServiceCategoryOut
     addresses: List[ProviderAddressOut]
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
