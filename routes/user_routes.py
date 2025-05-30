@@ -1,7 +1,7 @@
 from fastapi.security import OAuth2PasswordRequestForm
 from schemas.user_schemas import UserCreate, UserProfileUpdate
 from sqlalchemy.orm import Session
-from fastapi import Depends, Response, status, APIRouter
+from fastapi import Depends, Response, status, APIRouter, Security
 from core.database import get_db
 from crud.crud_user import (
     create_user,
@@ -10,7 +10,7 @@ from crud.crud_user import (
     update_user_profile,
     user_profile,
 )
-from dependencies.user_dependencies import get_current_user
+from dependencies.user_dependencies import get_current_user, oauth2_user_scheme
 
 
 router = APIRouter()
@@ -28,17 +28,28 @@ def login(
     return login_user(form_data, db)
 
 
-@router.post("/logout")
+@router.post(
+    "/logout",
+    dependencies=[Security(oauth2_user_scheme)],
+)
 def logout(response: Response, user: dict = Depends(get_current_user)):
     return logout_user(response)
 
 
-@router.get("/profile", status_code=status.HTTP_200_OK)
+@router.get(
+    "/profile",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(oauth2_user_scheme)],
+)
 def get_profile(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     return user_profile(db, user)
 
 
-@router.put("/profile", status_code=status.HTTP_200_OK)
+@router.put(
+    "/profile",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(oauth2_user_scheme)],
+)
 def update_profile(
     payload: UserProfileUpdate,
     db: Session = Depends(get_db),

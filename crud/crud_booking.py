@@ -1,6 +1,6 @@
 # crud/booking.py
 
-from fastapi import Depends, HTTPException
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from models import Booking, BookingAddress, User
 from schemas.booking_schemas import BookingCreate
