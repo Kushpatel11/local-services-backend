@@ -98,6 +98,7 @@ class ServiceProvider(Base):
     name = Column(String, nullable=False)
     mobile = Column(String(15), nullable=False, index=True)
     email = Column(String, nullable=False, index=True)
+    password_hash = Column(String, nullable=False)
     is_approved = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(

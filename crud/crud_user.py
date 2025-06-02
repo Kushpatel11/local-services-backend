@@ -1,4 +1,5 @@
-from fastapi import Depends, HTTPException, Response
+from typing import List
+from fastapi import Depends, HTTPException, Response, status
 from datetime import datetime
 
 from fastapi.responses import JSONResponse
@@ -10,6 +11,7 @@ from schemas.user_schemas import (
     UserProfileUpdate,
 )
 from models import (
+    ServiceProvider,
     User,
     UserOtherDetails,
     UserAddress,
@@ -161,3 +163,20 @@ def update_user_profile(
     return JSONResponse(
         status_code=200, content={"message": "Profile updated successfully"}
     )
+
+
+def get_approved_providers(db: Session) -> List[ServiceProvider]:
+    return db.query(ServiceProvider).filter(ServiceProvider.is_approved == True).all()
+
+
+def get_provider_by_id(db: Session, provider_id: int) -> ServiceProvider:
+    provider = (
+        db.query(ServiceProvider)
+        .filter(ServiceProvider.id == provider_id, ServiceProvider.is_approved == True)
+        .first()
+    )
+    if not provider:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Service provider not found"
+        )
+    return provider

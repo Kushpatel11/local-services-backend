@@ -1,21 +1,82 @@
-from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
-from models import ServiceProvider
-from typing import List
+from fastapi import HTTPException
+from sqlalchemy.orm import Session, joinedload
+from models import ProviderAddress, ServiceProvider
+from schemas.provider_schemas import ServiceProviderCreate, ProviderUpdate
+from utils.hashing import verify_password
+from core.security import create_access_token
+from sqlalchemy.future import select
 
 
-def get_approved_providers(db: Session) -> List[ServiceProvider]:
-    return db.query(ServiceProvider).filter(ServiceProvider.is_approved == True).all()
+# crud/provider.py
 
 
-def get_provider_by_id(db: Session, provider_id: int) -> ServiceProvider:
-    provider = (
+def register_provider(db: Session, provider_data: ServiceProviderCreate):
+    provider = ServiceProvider(
+        name=provider_data.name,
+        mobile=provider_data.mobile,
+        email=provider_data.email,
+        experience_years=provider_data.experience_years,
+        service_category_id=provider_data.service_category_id,
+        is_approved=False,  # 🛑 Needs admin approval
+    )
+    db.add(provider)
+    db.flush()
+
+    for addr in provider_data.addresses:
+        address = ProviderAddress(
+            provider_id=provider.id,
+            city=addr.city,
+            district=addr.district,
+            state=addr.state,
+            country=addr.country,
+            pincode=addr.pincode,
+            latitude=addr.latitude,
+            longitude=addr.longitude,
+            label=addr.label,
+        )
+        db.add(address)
+
+    db.commit()
+    db.refresh(provider)
+    return provider
+
+
+def provider_login(form_data, db):
+    result = db.execute(
+        select(ServiceProvider).where(ServiceProvider.email == form_data.username)
+    )
+    db_user = result.scalars().first()
+    if not db_user or not verify_password(form_data.password, db_user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    access_token = create_access_token(data={"sub": db_user.email, "role": "provider"})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+def update_profile(update_data, db, provider):
+    db_user = (
         db.query(ServiceProvider)
-        .filter(ServiceProvider.id == provider_id, ServiceProvider.is_approved == True)
+        .filter(ServiceProvider.email == provider["sub"])
         .first()
     )
-    if not provider:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Service provider not found"
-        )
-    return provider
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Provider not found")
+
+    for field, value in update_data.dict(exclude_unset=True).items():
+        if field == "addresses" and value:
+            for addr_update in value:
+                if db_user.addresses:
+                    addr = db_user.addresses[0]
+                    for a_field, a_value in addr_update.items():  # FIXED: no .dict()
+                        setattr(addr, a_field, a_value)
+                else:
+                    new_addr = ProviderAddress(
+                        provider_id=db_user.id, **addr_update  # FIXED: no .dict()
+                    )
+                    db.add(new_addr)
+        elif value is not None:
+            setattr(db_user, field, value)
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user

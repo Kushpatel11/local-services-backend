@@ -1,11 +1,12 @@
 # api/routes/admin_auth.py
 
 from typing import List
-from fastapi import APIRouter, Depends, status, Security
+from fastapi import APIRouter, Depends, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from schemas.booking_schemas import BookingOut
 from dependencies.admin_dependencies import get_current_admin, oauth2_admin_scheme
+from models import ServiceProvider
 
 
 from crud.crud_admin import (
@@ -55,3 +56,27 @@ def reject_bookings(
     current_admin: dict = Depends(get_current_admin),
 ):
     return reject_booking(id, db, current_admin)
+
+
+@router.post("/{id}/approve", status_code=200)
+def approve_provider(
+    id: int, db: Session = Depends(get_db), admin=Depends(get_current_admin)
+):
+    provider = db.query(ServiceProvider).filter(ServiceProvider.id == id).first()
+    if not provider:
+        raise HTTPException(status_code=404, detail="Provider not found")
+    provider.is_approved = True
+    db.commit()
+    return {"detail": "Provider approved"}
+
+
+@router.post("/{id}/reject", status_code=200)
+def reject_provider(
+    id: int, db: Session = Depends(get_db), admin=Depends(get_current_admin)
+):
+    provider = db.query(ServiceProvider).filter(ServiceProvider.id == id).first()
+    if not provider:
+        raise HTTPException(status_code=404, detail="Provider not found")
+    db.delete(provider)
+    db.commit()
+    return {"detail": "Provider rejected and deleted"}

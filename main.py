@@ -19,7 +19,7 @@ def custom_openapi():
     openapi_schema = get_openapi(
         title="Local Services Booking API",
         version="1.0.0",
-        description="API with user and admin login flows",
+        description="API with user,admin and provider login flows",
         routes=app.routes,
     )
 
@@ -31,6 +31,10 @@ def custom_openapi():
         "AdminOAuth2": {
             "type": "oauth2",
             "flows": {"password": {"tokenUrl": "/admin/login", "scopes": {}}},
+        },
+        "ProviderOAuth2": {
+            "type": "oauth2",
+            "flows": {"password": {"tokenUrl": "/provider/login", "scopes": {}}},
         },
     }
 
