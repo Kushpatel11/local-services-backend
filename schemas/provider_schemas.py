@@ -18,6 +18,7 @@ class ServiceProviderCreate(BaseModel):
     name: str
     mobile: str
     email: EmailStr
+    password: str
     experience_years: int
     service_category_id: int
     addresses: List[ProviderAddressCreate]

@@ -1,5 +1,6 @@
 # api/routes/admin_auth.py
 
+from datetime import datetime
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordRequestForm
@@ -80,3 +81,21 @@ def reject_provider(
     db.delete(provider)
     db.commit()
     return {"detail": "Provider rejected and deleted"}
+
+
+@router.post("/{id}/delete", status_code=200)
+def delete_provider(
+    id: int, db: Session = Depends(get_db), admin=Depends(get_current_admin)
+):
+    provider = (
+        db.query(ServiceProvider)
+        .filter(ServiceProvider.id == id, ServiceProvider.is_deleted == False)
+        .first()
+    )
+    if not provider:
+        raise HTTPException(status_code=404, detail="Provider not found")
+    provider.is_deleted = True
+    provider.is_approved = False
+    provider.deleted_at = datetime.utcnow()
+    db.commit()
+    return None

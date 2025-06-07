@@ -38,6 +38,8 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         role="user",  # Or another default role based on your system
         created_at=datetime.utcnow(),  # Use UTC time for consistency
         updated_at=datetime.utcnow(),
+        is_deleted=False,
+        deleted_at=None,
     )
     db.add(db_user)
     db.commit()
@@ -166,13 +168,23 @@ def update_user_profile(
 
 
 def get_approved_providers(db: Session) -> List[ServiceProvider]:
-    return db.query(ServiceProvider).filter(ServiceProvider.is_approved == True).all()
+    return (
+        db.query(ServiceProvider)
+        .filter(
+            ServiceProvider.is_approved == True, ServiceProvider.is_deleted == False
+        )
+        .all()
+    )
 
 
 def get_provider_by_id(db: Session, provider_id: int) -> ServiceProvider:
     provider = (
         db.query(ServiceProvider)
-        .filter(ServiceProvider.id == provider_id, ServiceProvider.is_approved == True)
+        .filter(
+            ServiceProvider.id == provider_id,
+            ServiceProvider.is_approved == True,
+            ServiceProvider.is_deleted == False,
+        )
         .first()
     )
     if not provider:

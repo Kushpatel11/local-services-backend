@@ -8,10 +8,13 @@ from sqlalchemy import (
     Boolean,
     Date,
     Time,
+    UniqueConstraint,
 )
 from core.database import Base
 from datetime import datetime
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
+from sqlalchemy.types import Enum as SQLAEnum
+import enum
 
 
 class User(Base):
@@ -25,6 +28,8 @@ class User(Base):
     role = Column(String(50), nullable=False)  # 'customer', 'service_provider', 'admin'
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False)
+    deleted_at = Column(DateTime, nullable=True)
 
     user_addresses = relationship(
         "UserAddress", back_populates="user", cascade="all, delete-orphan"
@@ -81,6 +86,9 @@ class ServiceCategory(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     description = Column(String, nullable=True)
+    parent_id = Column(Integer, ForeignKey("service_categories.id"), nullable=True)
+
+    parent = relationship("ServiceCategory", remote_side=[id], backref="subcategories")
 
     providers = relationship(
         "ServiceProvider", back_populates="category", cascade="all, delete"
@@ -104,6 +112,8 @@ class ServiceProvider(Base):
     updated_at = Column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
+    is_deleted = Column(Boolean, default=False, nullable=False)
+    deleted_at = Column(DateTime, nullable=True)
 
     addresses = relationship(
         "ProviderAddress", back_populates="provider", cascade="all, delete"
@@ -143,10 +153,8 @@ class Service(Base):
 
     title = Column(String, nullable=False)  # e.g., "Fix Electrical Wiring"
     description = Column(String, nullable=True)
-    price_range = Column(
-        String, nullable=False
-    )  # Or define min_price/max_price if needed
-
+    min_price = Column(Float, nullable=True)
+    max_price = Column(Float, nullable=True)
     available = Column(Boolean, default=True, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -160,13 +168,26 @@ class Service(Base):
     )
     provider = relationship("ServiceProvider", back_populates="services")
 
+    @validates("min_price", "max_price")
+    def validate_prices(self, key, value):
+        # Only validate if both prices are set (allow creation with one or both as None)
+        if key == "min_price" and self.max_price is not None and value is not None:
+            if value > self.max_price:
+                raise ValueError("min_price cannot be greater than max_price")
+        elif key == "max_price" and self.min_price is not None and value is not None:
+            if value < self.min_price:
+                raise ValueError("max_price cannot be less than min_price")
+        return value
+
 
 class ServiceRating(Base):
     __tablename__ = "service_ratings"
+    __table_args__ = (UniqueConstraint("booking_id"),)
 
     id = Column(Integer, primary_key=True, index=True)
     service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False, unique=True)
 
     rating = Column(Integer, nullable=False)  # 1 to 5
     comment = Column(String, nullable=True)
@@ -175,6 +196,21 @@ class ServiceRating(Base):
 
     service = relationship("Service", back_populates="ratings")
     user = relationship("User", back_populates="ratings")
+    booking = relationship("Booking", back_populates="rating")
+
+    @validates("rating")
+    def validate_rating(self, key, value):
+        if not 1 <= value <= 5:
+            raise ValueError("Rating must be between 1 and 5")
+        return value
+
+
+class BookingStatus(enum.Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+    completed = "completed"
+    cancelled = "cancelled"
 
 
 class Booking(Base):
@@ -187,7 +223,9 @@ class Booking(Base):
     booking_date = Column(Date, nullable=False)
     booking_time = Column(Time, nullable=False)
 
-    status = Column(String, default="pending", nullable=False)
+    status = Column(
+        SQLAEnum(BookingStatus), default=BookingStatus.pending, nullable=False
+    )
     # Choices: 'pending', 'approved', 'rejected', 'completed', 'cancelled'
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -199,6 +237,12 @@ class Booking(Base):
     service = relationship("Service", back_populates="bookings")
     booking_address = relationship(
         "BookingAddress", back_populates="booking", uselist=False, cascade="all, delete"
+    )
+    rating = relationship(
+        "ServiceRating",
+        back_populates="booking",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
 
 

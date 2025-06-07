@@ -1,8 +1,14 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from core.database import get_db
-from crud.crud_provider import register_provider, provider_login, update_profile
+from crud.crud_provider import (
+    register_provider,
+    provider_login,
+    update_profile,
+    delete_own_profile,
+)
 from schemas.provider_schemas import (
     ProviderProfileOut,
     ServiceProviderCreate,
@@ -52,7 +58,7 @@ def get_profile(
 
 
 @router.put(
-    "/profile",
+    "/update",
     response_model=ProviderProfileOut,
     dependencies=[Security(oauth2_provider_scheme)],
 )
@@ -62,3 +68,15 @@ def update_profiles(
     provider: dict = Depends(get_current_provider),
 ):
     return update_profile(update_data, db, provider)
+
+
+@router.delete(
+    "/delete",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(oauth2_provider_scheme)],
+)
+def delete_profile(
+    db: Session = Depends(get_db), provider: dict = Depends(get_current_provider)
+):
+
+    return delete_own_profile(db, provider)
