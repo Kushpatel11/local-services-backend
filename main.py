@@ -61,8 +61,8 @@ def read_root():
     return {"message": "Hello, database connected!"}
 
 
-app.include_router(user_router, prefix="/user", tags=["User"])
-app.include_router(provider_router, prefix="/provider", tags=["Provider"])
+app.include_router(user_router, prefix="/users", tags=["User"])
+app.include_router(provider_router, prefix="/providers", tags=["Provider"])
 app.include_router(booking_router, tags=["Bookings"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(public_router, prefix="/public", tags=["Public"])
