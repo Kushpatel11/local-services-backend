@@ -93,6 +93,7 @@ class ServiceCategory(Base):
     providers = relationship(
         "ServiceProvider", back_populates="category", cascade="all, delete"
     )
+    services = relationship("Service", back_populates="category")
 
 
 class ServiceProvider(Base):
@@ -150,7 +151,7 @@ class Service(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     provider_id = Column(Integer, ForeignKey("service_providers.id"), nullable=False)
-
+    service_category_id = Column(Integer, ForeignKey("service_categories.id"))
     title = Column(String, nullable=False)  # e.g., "Fix Electrical Wiring"
     description = Column(String, nullable=True)
     min_price = Column(Float, nullable=True)
@@ -167,6 +168,7 @@ class Service(Base):
         "ServiceRating", back_populates="service", cascade="all, delete"
     )
     provider = relationship("ServiceProvider", back_populates="services")
+    category = relationship("ServiceCategory", back_populates="services")
 
     @validates("min_price", "max_price")
     def validate_prices(self, key, value):

@@ -3,7 +3,7 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from models import Admin, Booking
+from models import Admin, Booking, ServiceCategory
 from utils.admin_hashing import verify_password
 from core.database import get_db
 from core.security import create_access_token
@@ -57,3 +57,24 @@ def reject_booking(id, db, current_admin):
     db.refresh(booking)
 
     return {"message": "Booking rejected successfully", "booking_id": booking.id}
+
+
+def create_service_category(db: Session, category_in):
+    # If parent_id is provided, verify it exists
+    if category_in.parent_id:
+        parent = (
+            db.query(ServiceCategory)
+            .filter(ServiceCategory.id == category_in.parent_id)
+            .first()
+        )
+        if not parent:
+            raise ValueError("Parent category does not exist.")
+    category = ServiceCategory(
+        name=category_in.name,
+        description=category_in.description,
+        parent_id=category_in.parent_id,
+    )
+    db.add(category)
+    db.commit()
+    db.refresh(category)
+    return category

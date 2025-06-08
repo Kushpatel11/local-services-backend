@@ -1,8 +1,8 @@
 from datetime import datetime
 from fastapi import HTTPException
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from models import ProviderAddress, ServiceProvider, ServiceCategory
-from schemas.provider_schemas import ServiceProviderCreate, ProviderUpdate
+from schemas.provider_schemas import ServiceProviderCreate
 from utils.hashing import verify_password
 from core.security import create_access_token
 from sqlalchemy.future import select
@@ -59,9 +59,13 @@ def register_provider(db: Session, provider_data: ServiceProviderCreate):
 
 def provider_login(form_data, db):
     result = db.execute(
-        select(ServiceProvider).where(ServiceProvider.email == form_data.username)
+        select(ServiceProvider).where(
+            ServiceProvider.email == form_data.username,
+            ServiceProvider.is_deleted != True,  # noqa: E712
+        )
     )
     db_user = result.scalars().first()
+
     if not db_user or not verify_password(form_data.password, db_user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
@@ -106,7 +110,7 @@ def delete_own_profile(
         db.query(ServiceProvider)
         .filter(
             ServiceProvider.email == provider["sub"],
-            ServiceProvider.is_deleted == False,
+            ServiceProvider.is_deleted == False,  # noqa: E712
         )
         .first()
     )

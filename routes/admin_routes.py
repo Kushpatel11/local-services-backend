@@ -11,8 +11,10 @@ from crud.crud_admin import (
     list_all_bookings,
     approve_booking,
     reject_booking,
+    create_service_category,
 )
 from core.database import get_db
+from schemas.admin_schemas import ServiceCategoryCreate
 
 router = APIRouter()
 
@@ -135,3 +137,25 @@ def delete_provider(
     provider.deleted_at = datetime.utcnow()
     db.commit()
     return None
+
+
+@router.post(
+    "/service-categories",
+    response_model=ServiceCategoryCreate,
+    status_code=status.HTTP_201_CREATED,
+    summary="Add a new service category",
+    dependencies=[Depends(oauth2_admin_scheme)],
+)
+def add_service_category(
+    category_in: ServiceCategoryCreate,
+    db: Session = Depends(get_db),
+    current_admin: dict = Depends(get_current_admin),
+):
+    """
+    Add a new service category (optionally nested under another category).
+    """
+    try:
+        category = create_service_category(db, category_in)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return category

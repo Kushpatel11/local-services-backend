@@ -7,6 +7,7 @@ from routes.provider_routes import router as provider_router
 from routes.booking_routes import router as booking_router
 from routes.admin_routes import router as admin_router
 from routes.public_routes import router as public_router
+from routes.service_routes import router as service_router
 from fastapi.openapi.utils import get_openapi
 
 
@@ -62,7 +63,8 @@ def read_root():
 
 
 app.include_router(user_router, prefix="/users", tags=["User"])
-app.include_router(provider_router, prefix="/providers", tags=["Provider"])
-app.include_router(booking_router, tags=["Bookings"])
+app.include_router(provider_router, prefix="/provider", tags=["Provider"])
+app.include_router(booking_router, prefix="/users", tags=["User"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(public_router, prefix="/public", tags=["Public"])
+app.include_router(service_router, prefix="/provider", tags=["Provider"])
