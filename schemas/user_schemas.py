@@ -3,6 +3,21 @@ from datetime import date
 from typing import Optional, List
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class OTPVerifyRequest(BaseModel):
+    email: EmailStr
+    otp: str
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str
+
+
 class UserCreate(BaseModel):
     fullname: str
     email: EmailStr

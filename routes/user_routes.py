@@ -26,7 +26,7 @@ router = APIRouter()
 @router.post(
     "/signup",
     status_code=status.HTTP_201_CREATED,
-    response_model=UserProfile,
+    response_model=UserCreate,
     summary="Sign up as a new user",
 )
 def signup(user: UserCreate, db: Session = Depends(get_db)):
@@ -75,7 +75,7 @@ def get_profile(db: Session = Depends(get_db), user: dict = Depends(get_current_
 @router.put(
     "/profile",
     status_code=status.HTTP_200_OK,
-    response_model=UserProfile,
+    response_model=UserProfileUpdate,
     summary="Update current user profile",
     dependencies=[Security(oauth2_user_scheme)],
 )

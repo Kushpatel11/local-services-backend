@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from models import Admin, Booking, ServiceCategory
-from utils.admin_hashing import verify_password
+from utils.hashing import verify_password
 from core.database import get_db
 from core.security import create_access_token
 from sqlalchemy.future import select
