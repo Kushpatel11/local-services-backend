@@ -1,8 +1,8 @@
 # crud/booking.py
 
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
-from models import Booking, BookingAddress, User
+from sqlalchemy.orm import Session, joinedload
+from models import Booking, BookingAddress, User, Service, BookingStatus
 from schemas.booking_schemas import BookingCreate
 
 
@@ -106,4 +106,33 @@ def cancel_booking(id, db, current_user):
     db.commit()
     db.refresh(booking)
 
+    return booking
+
+
+def get_provider_bookings(db: Session, provider_id: int):
+    # Show all bookings for services owned by provider
+    bookings = (
+        db.query(Booking)
+        .join(Service)
+        .filter(Service.provider_id == provider_id)
+        .options(joinedload(Booking.user), joinedload(Booking.booking_address))
+        .order_by(Booking.created_at.desc())
+        .all()
+    )
+    return bookings
+
+
+def provider_update_booking_status(
+    db: Session, provider_id: int, booking_id: int, new_status: str
+):
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(404, "Booking not found")
+    if booking.service.provider_id != provider_id:
+        raise HTTPException(403, "Not your booking")
+    if booking.status != BookingStatus.pending and new_status == "completed":
+        raise HTTPException(400, "Only pending bookings can be completed")
+    booking.status = new_status
+    db.commit()
+    db.refresh(booking)
     return booking

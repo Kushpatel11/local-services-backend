@@ -8,6 +8,9 @@ from schemas.user_schemas import (
     ServiceProviderOut,
     UserProfile,
 )
+from models import User
+from schemas.rating_schemas import ServiceRatingCreate, ServiceRatingOut
+from crud.crud_ratings import create_rating
 from core.database import get_db
 from crud.crud_user import (
     create_user,
@@ -122,3 +125,13 @@ def get_service_provider(provider_id: int, db: Session = Depends(get_db)):
     Get details of a specific service provider by ID.
     """
     return get_provider_by_id(db, provider_id)
+
+
+@router.post("/rate", response_model=ServiceRatingOut)
+def submit_rating(
+    data: ServiceRatingCreate,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    db_user = db.query(User).filter(User.email == user["sub"]).first()
+    return create_rating(db, user_id=db_user.id, data=data)

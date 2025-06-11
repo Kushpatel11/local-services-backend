@@ -18,6 +18,10 @@ from dependencies.provider_dependencies import (
     oauth2_provider_scheme,
 )
 from models import ServiceProvider
+from typing import List
+from schemas.booking_schemas import BookingOut
+from crud.crud_booking import get_provider_bookings, provider_update_booking_status
+
 
 router = APIRouter()
 
@@ -100,3 +104,35 @@ def delete_profile(
     Soft-delete the currently authenticated provider account.
     """
     return delete_own_profile(db, provider)
+
+
+@router.get("/my_bookings", response_model=List[BookingOut])
+def list_my_bookings(
+    db: Session = Depends(get_db), provider: dict = Depends(get_current_provider)
+):
+    db_user = (
+        db.query(ServiceProvider)
+        .filter(ServiceProvider.email == provider["sub"])
+        .first()
+    )
+    bookings = get_provider_bookings(db, provider_id=db_user.id)
+    return bookings
+
+
+@router.patch("/{booking_id}/status", response_model=BookingOut)
+def update_booking_status(
+    booking_id: int,
+    status: str,
+    db: Session = Depends(get_db),
+    provider: dict = Depends(get_current_provider),
+):
+    # Example: status='completed'
+    db_user = (
+        db.query(ServiceProvider)
+        .filter(ServiceProvider.email == provider["sub"])
+        .first()
+    )
+    booking = provider_update_booking_status(
+        db, provider_id=db_user.id, booking_id=booking_id, new_status=status
+    )
+    return booking

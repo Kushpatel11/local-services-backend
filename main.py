@@ -9,6 +9,7 @@ from routes.admin_routes import router as admin_router
 from routes.public_routes import router as public_router
 from routes.service_routes import router as service_router
 from routes.forgot_password import router as forgot_password_router
+from routes.service_ratings_routes import router as ratings_router
 from fastapi.openapi.utils import get_openapi
 
 
@@ -63,10 +64,11 @@ def read_root():
     return {"message": "Hello, database connected!"}
 
 
-app.include_router(user_router, prefix="/users", tags=["User"])
+app.include_router(user_router, prefix="/user", tags=["User"])
 app.include_router(provider_router, prefix="/provider", tags=["Provider"])
-app.include_router(booking_router, prefix="/users", tags=["User"])
+app.include_router(booking_router, prefix="/user", tags=["User"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(public_router, prefix="/public", tags=["Public"])
 app.include_router(service_router, prefix="/provider", tags=["Provider"])
 app.include_router(forgot_password_router, tags=["OTP"])
+app.include_router(ratings_router, prefix="/public/services", tags=["Service Reviews"])
