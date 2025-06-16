@@ -1,4 +1,6 @@
 import razorpay
+import hmac
+import hashlib
 from core.config import settings
 
 client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
@@ -24,3 +26,10 @@ def verify_razorpay_signature(order_id, payment_id, signature):
             "razorpay_signature": signature,
         }
     )
+
+
+def verify_webhook_signature(body: bytes, signature: str, secret: str):
+    generated_signature = hmac.new(
+        bytes(secret, "utf-8"), body, hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(generated_signature, signature)

@@ -11,6 +11,7 @@ from models import (
 )
 from utils.razorpay_client import create_razorpay_order
 from pydantic import BaseModel
+from utils.razorpay_client import client
 
 router = APIRouter()
 
@@ -140,3 +141,19 @@ def complete_booking_and_credit_wallet(
     )
     db.commit()
     return {"detail": f"Booking completed, provider credited ₹{earning}"}
+
+
+@router.post("/refund")
+def refund_payment(
+    payment_id: int, amount: float = None, db: Session = Depends(get_db)
+):
+    payment = db.query(Payment).filter_by(id=payment_id).first()
+    if not payment or payment.status != PaymentStatus.succeeded:
+        raise HTTPException(404, "Payment not found or not successful")
+    # Use full amount if not specified
+    refund = client.payment.refund(
+        payment.razorpay_payment_id, {"amount": int(amount * 100) if amount else None}
+    )
+    payment.status = PaymentStatus.failed  # or add a new RefundStatus if needed
+    db.commit()
+    return {"refund": refund}

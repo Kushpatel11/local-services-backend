@@ -13,6 +13,7 @@ from routes.service_ratings_routes import router as ratings_router
 from fastapi.openapi.utils import get_openapi
 from routes.provider_wallet_routes import router as p_wallet_router
 from routes.payment_routes import router as payment_router
+from routes.webhook_routes import router as webhook_router
 
 
 app = FastAPI()
@@ -76,3 +77,4 @@ app.include_router(forgot_password_router, tags=["OTP"])
 app.include_router(ratings_router, prefix="/public/services", tags=["Service Reviews"])
 app.include_router(p_wallet_router, tags=["wallet"])
 app.include_router(payment_router, prefix="/payment", tags=["payment"])
+app.include_router(webhook_router, tags=["payment"])
