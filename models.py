@@ -8,6 +8,8 @@ from sqlalchemy import (
     Boolean,
     Date,
     Time,
+    Enum,
+    func,
     UniqueConstraint,
 )
 from core.database import Base
@@ -256,6 +258,9 @@ class Booking(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    payments = relationship(
+        "Payment", back_populates="booking", cascade="all, delete-orphan"
+    )
 
 
 class BookingAddress(Base):
@@ -287,3 +292,97 @@ class Admin(Base):
     updated_at = Column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
+
+
+class TransactionType(enum.Enum):
+    earning = "earning"
+    withdrawal = "withdrawal"
+    refund = "refund"
+    bonus = "bonus"
+    penalty = "penalty"
+
+
+class TransactionStatus(enum.Enum):
+    pending = "pending"
+    completed = "completed"
+    failed = "failed"
+
+
+class ProviderWallet(Base):
+    __tablename__ = "provider_wallets"
+    id = Column(Integer, primary_key=True, index=True)
+    provider_id = Column(
+        Integer, ForeignKey("service_providers.id"), unique=True, nullable=False
+    )
+    balance = Column(Float, default=0.0, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime, default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    provider = relationship("ServiceProvider")
+    transactions = relationship(
+        "WalletTransaction", back_populates="wallet", cascade="all, delete-orphan"
+    )
+
+
+class WalletTransaction(Base):
+    __tablename__ = "wallet_transactions"
+    id = Column(Integer, primary_key=True, index=True)
+    wallet_id = Column(Integer, ForeignKey("provider_wallets.id"), nullable=False)
+    amount = Column(Float, nullable=False)
+    type = Column(Enum(TransactionType), nullable=False)
+    status = Column(
+        Enum(TransactionStatus), default=TransactionStatus.completed, nullable=False
+    )
+    related_booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=True)
+    note = Column(String, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    wallet = relationship("ProviderWallet", back_populates="transactions")
+
+
+class WithdrawalStatus(enum.Enum):
+    requested = "requested"
+    approved = "approved"
+    rejected = "rejected"
+    processed = "processed"
+    failed = "failed"
+
+
+class WithdrawalRequest(Base):
+    __tablename__ = "withdrawal_requests"
+    id = Column(Integer, primary_key=True, index=True)
+    provider_id = Column(Integer, ForeignKey("service_providers.id"), nullable=False)
+    amount = Column(Float, nullable=False)
+    status = Column(
+        Enum(WithdrawalStatus), default=WithdrawalStatus.requested, nullable=False
+    )
+    upi_id = Column(String, nullable=True)  # For demo, only UPI payouts
+    requested_at = Column(DateTime, default=func.now(), nullable=False)
+    processed_at = Column(DateTime, nullable=True)
+    admin_note = Column(String, nullable=True)
+
+    provider = relationship("ServiceProvider")
+
+
+class PaymentStatus(enum.Enum):
+    created = "created"
+    succeeded = "succeeded"
+    failed = "failed"
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+    id = Column(Integer, primary_key=True, index=True)
+    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
+    razorpay_order_id = Column(String, nullable=False)
+    razorpay_payment_id = Column(String, nullable=True)
+    amount = Column(Float, nullable=False)
+    currency = Column(String, default="INR", nullable=False)
+    status = Column(Enum(PaymentStatus), default=PaymentStatus.created, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime, default=func.now(), onupdate=func.now(), nullable=False
+    )
+    booking = relationship("Booking", back_populates="payments")

@@ -11,6 +11,8 @@ from routes.service_routes import router as service_router
 from routes.forgot_password import router as forgot_password_router
 from routes.service_ratings_routes import router as ratings_router
 from fastapi.openapi.utils import get_openapi
+from routes.provider_wallet_routes import router as p_wallet_router
+from routes.payment_routes import router as payment_router
 
 
 app = FastAPI()
@@ -72,3 +74,5 @@ app.include_router(public_router, prefix="/public", tags=["Public"])
 app.include_router(service_router, prefix="/provider", tags=["Provider"])
 app.include_router(forgot_password_router, tags=["OTP"])
 app.include_router(ratings_router, prefix="/public/services", tags=["Service Reviews"])
+app.include_router(p_wallet_router, tags=["wallet"])
+app.include_router(payment_router, prefix="/payment", tags=["payment"])
