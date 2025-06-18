@@ -1,16 +1,15 @@
 # Local Services Backend
 
-A backend API for a Local Services Booking System, developed with FastAPI and PostgreSQL. This project provides features for user and admin authentication, service provider management, service bookings, reviews, notifications, and advanced search/filtering.
+A backend API for a Local Services Booking System, developed with FastAPI and PostgreSQL. This project provides features for user and admin authentication, service provider management, service bookings, reviews, notifications, advanced search/filtering, and robust payment and provider wallet handling.
 
 ---
 
 ## Features
 
 ### Authentication & Authorization
-- Implements JWT-based authentication for both users and admins.
-- Supports user registration, login, logout, password reset, and token refreshing.
+- JWT-based authentication for both users and admins.
+- User registration, login, logout, password reset, and token refreshing.
 - Role-Based Access Control (RBAC) with separate admin and user privileges.
-- Admin authentication endpoints for administrative actions.
 
 ### User Management
 - Retrieve, update, and delete user profiles.
@@ -29,42 +28,94 @@ A backend API for a Local Services Booking System, developed with FastAPI and Po
 
 ### Reviews & Ratings
 - Users can submit and view reviews for service providers.
-- Review data associated with providers for transparent feedback.
 
 ### Search & Filters
 - Search service providers by location or service type.
 - Admins can filter bookings using various criteria.
 
 ### Notifications
-- Support for system and booking notifications (email/SMS hooks present, actual integrations depend on configuration).
+- (Stub/extendable) Support for system and booking notifications.
 
-### Geolocation
-- Uses Google Maps API for geocoding addresses and distance-based provider searches.
+---
 
-### Database Models
-- Models include users, admins, service_providers, bookings, reviews, and notifications.
-- Designed for relational data integrity and extensibility.
+## Payment & Wallet System
 
-### Modular Project Structure
-- Organized into modules: `api`, `models`, `schemas`, `crud`, `utils`, and `core`.
-- Follows scalable and maintainable Python backend architecture.
+### Payment
+- **Integrated with Razorpay** for secure, real-world payment processing.
+- Payment model tracks status (`created`, `succeeded`, `failed`), amount, currency, and related booking.
+- Endpoints for initiating payments, marking as successful, logging payments, and processing refunds.
+- Payment verification and webhook handling via Razorpay.
 
-### Testing
-- Unit tests for core business logic.
-- Integration tests for API endpoints.
-- Test suites present in dependencies for cryptography/security (e.g., passlib, greenlet).
+### Provider Wallet
+- Each service provider has a wallet account, automatically tracked and updated.
+- Wallet tracks real-time balance, all earnings, withdrawals, and refunds as transactions.
+- Automatic commission deduction and credit to provider wallet after successful bookings.
+- Minimum withdrawal amount and balance checks enforced.
 
-### Security
-- Secure password storage with bcrypt and passlib.
-- JWT tokens for access and refresh.
-- Environment-based secret management.
-- Audit logging and rate limiting hooks present for future extension.
+### Withdrawals
+- Providers can request withdrawals to UPI.
+- Withdrawal requests are tracked with statuses (`requested`, `approved`, `rejected`, `processed`, `failed`).
+- Admins can approve/reject withdrawal requests.
+- All wallet activity is transparently logged.
 
-### Deployment & Configuration
-- Designed for deployment on platforms like Render, Heroku, AWS, and DigitalOcean.
-- Uses environment variables for configuration and secrets.
-- Auto-generated interactive API documentation available at `/docs` (Swagger UI).
-- Docker and containerized deployment support.
+---
+
+## Project Structure
+
+```
+api/
+  └── ...         # API route handlers
+models.py         # Database models (SQLAlchemy)
+schemas/          # Pydantic schemas
+crud/             # CRUD logic
+routes/           # API route modules
+utils/            # Utility functions (e.g., Razorpay client)
+core/             # Core app logic (config, security, db)
+alembic/          # Database migrations
+tests/            # Test suites
+```
+
+---
+
+## Technologies Used
+
+- Python 3.x
+- FastAPI
+- PostgreSQL
+- SQLAlchemy
+- Pydantic
+- Alembic (migrations)
+- Passlib, bcrypt (security)
+- JWT (authentication)
+- Razorpay (payment gateway)
+
+---
+
+## API Highlights
+
+- **/payment/initiate:** Start a new payment for a booking.
+- **/payment/booking/{booking_id}/payment_logs:** View all payment attempts for a booking.
+- **/payment/complete_booking_and_credit_wallet:** Mark a booking as complete and automatically credit provider’s wallet.
+- **/payment/refund:** Process refunds for bookings.
+- **/wallet:** Provider wallet details and balance.
+- **/transactions:** List all wallet transactions for a provider.
+- **/withdraw:** Request withdrawal from provider wallet.
+
+---
+
+## Database Models
+
+| Table                | Description                                    |
+|----------------------|------------------------------------------------|
+| users                | User info (id, name, email, etc.)              |
+| admins               | Admin credentials & roles                      |
+| service_providers    | Service provider profiles                      |
+| bookings             | Bookings with user/provider link               |
+| reviews              | User reviews for providers                     |
+| provider_wallets     | Wallet per provider                            |
+| wallet_transactions  | All wallet transactions (earnings, withdrawals, refunds) |
+| withdrawal_requests  | Withdrawal requests by providers               |
+| payments             | Payment records (linked to bookings & Razorpay)|
 
 ---
 
@@ -84,7 +135,7 @@ A backend API for a Local Services Booking System, developed with FastAPI and Po
    ```
 
 3. **Set environment variables:**
-   - Copy `.env.example` to `.env` and fill in your configuration (DB credentials, JWT secret, etc).
+   - Copy `.env.example` to `.env` and fill in your configuration (DB credentials, JWT secret, Razorpay keys, etc).
 
 4. **Run database migrations:**
    ```sh
@@ -101,46 +152,9 @@ A backend API for a Local Services Booking System, developed with FastAPI and Po
 
 ---
 
-## Project Structure
-
-```
-api/
-  └── ...         # API route handlers
-models/
-  └── ...         # Database models (SQLAlchemy)
-schemas/
-  └── ...         # Pydantic schemas
-crud/
-  └── ...         # CRUD logic
-utils/
-  └── ...         # Utility functions
-core/
-  └── ...         # Core app logic (config, security, etc)
-tests/
-  └── ...         # Test suites
-```
-
----
-
-## Technologies Used
-
-- Python 3.x
-- FastAPI
-- PostgreSQL
-- SQLAlchemy
-- Pydantic
-- Alembic (migrations)
-- Passlib, bcrypt (security)
-- JWT (authentication)
-- Docker (deployment)
-- Celery/RabbitMQ (background tasks, optional)
-- Google Maps API (geolocation)
-
----
-
 ## License
 
-This project uses open source libraries (see `requirements.txt` and included licenses in `venv/Lib/site-packages`). See individual package licenses for details.
+This project uses open source libraries (see `requirements.txt` and included licenses). See individual package licenses for details.
 
 ---
 
