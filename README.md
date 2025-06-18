@@ -163,3 +163,21 @@ This project uses open source libraries (see `requirements.txt` and included lic
 Kushpatel11
 
 ---
+
+## 🚀 Future Scope & Planned Features
+
+- Mobile app support for users and providers
+- Real-time chat and push notifications
+- Advanced analytics and dashboards for admins/providers
+- Multi-language and localization support
+- Integration with additional payment gateways
+- Loyalty, referral, and rewards systems
+- Service scheduling and calendar sync
+- Automated invoicing and tax compliance
+- Caching and CDN for performance
+- Containerization and Kubernetes orchestration
+- Asynchronous task processing (Celery/RQ)
+- API rate limiting and advanced security
+- Centralized logging, monitoring, and alerting
+- Blue/green and canary deployments
+- Horizontal scaling and zero-downtime migrations
